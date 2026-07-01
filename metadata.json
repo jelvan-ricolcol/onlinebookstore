@@ -1,0 +1,6 @@
+{
+  "name": "Jelvan Books Store",
+  "description": "An elegant, highly interactive online bookstore featuring real-time catalog filtering, a reactive shopping cart, persistent reading wishlists, a review manager, and interactive book discovery with delightful micro-animations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
