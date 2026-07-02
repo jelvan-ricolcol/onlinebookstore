@@ -1,12 +1,16 @@
 import { useState, FormEvent } from 'react';
 import { AuthUser } from '../types';
-import { X, ShieldCheck, Mail, Lock, User, Briefcase, KeyRound } from 'lucide-react';
+import { X, ShieldCheck, Mail, Lock, User, Briefcase, KeyRound, MailCheck, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLoginSuccess: (user: AuthUser) => void;
+}
+
+function generateVerificationCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModalProps) {
@@ -23,7 +27,41 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   
   const [error, setError] = useState('');
 
+  // Email verification step states
+  const [verificationStep, setVerificationStep] = useState(false);
+  const [sentCode, setSentCode] = useState('');
+  const [enteredCode, setEnteredCode] = useState('');
+  const [pendingUser, setPendingUser] = useState<AuthUser | null>(null);
+
   if (!isOpen) return null;
+
+  const triggerVerification = (user: AuthUser) => {
+    const code = generateVerificationCode();
+    setSentCode(code);
+    setPendingUser(user);
+    setEnteredCode('');
+    setError('');
+    setVerificationStep(true);
+  };
+
+  const handleVerifyCode = (e: FormEvent) => {
+    e.preventDefault();
+    if (enteredCode.trim() === sentCode) {
+      if (pendingUser) {
+        onLoginSuccess(pendingUser);
+        onClose();
+      }
+    } else {
+      setError('Incorrect verification code. Please try again.');
+    }
+  };
+
+  const handleResendCode = () => {
+    const newCode = generateVerificationCode();
+    setSentCode(newCode);
+    setEnteredCode('');
+    setError('');
+  };
 
   const handleSubmitBuyer = (e: FormEvent) => {
     e.preventDefault();
@@ -46,8 +84,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       role: 'Buyer',
     };
 
-    onLoginSuccess(newUser);
-    onClose();
+    triggerVerification(newUser);
   };
 
   const handleSubmitPublisher = (e: FormEvent) => {
@@ -72,8 +109,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       companyName: companyName.trim(),
     };
 
-    onLoginSuccess(newUser);
-    onClose();
+    triggerVerification(newUser);
   };
 
   const handleQuickLogin = (role: 'Buyer' | 'Publisher') => {
@@ -126,6 +162,86 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
             <X className="w-5 h-5" />
           </button>
 
+          {/* Verification Step */}
+          {verificationStep ? (
+            <>
+              <div className="p-6 bg-white border-b border-stone-150 flex flex-col items-center text-center">
+                <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center mb-2.5">
+                  <MailCheck className="w-5 h-5" />
+                </div>
+                <h3 className="font-serif font-bold text-lg text-stone-900 leading-none">
+                  Verify Your Email
+                </h3>
+                <p className="text-stone-400 text-xs mt-1.5 font-light">
+                  A verification code has been sent to{' '}
+                  <span className="font-semibold text-stone-600">{pendingUser?.email}</span>
+                </p>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Simulated email code display for demo */}
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+                  <p className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 mb-1">
+                    Demo — Simulated Email Code
+                  </p>
+                  <p className="text-xs text-emerald-600 mb-2 font-light">
+                    In production this would be sent to your email inbox.
+                  </p>
+                  <span className="font-mono font-bold text-2xl tracking-[0.35em] text-emerald-800 select-all">
+                    {sentCode}
+                  </span>
+                </div>
+
+                {error && (
+                  <p className="text-[11px] text-rose-600 bg-rose-50 border border-rose-100 px-3 py-1.5 rounded-md">
+                    {error}
+                  </p>
+                )}
+
+                <form onSubmit={handleVerifyCode} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] uppercase font-bold tracking-wider text-stone-500">
+                      Enter Verification Code
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      maxLength={6}
+                      value={enteredCode}
+                      onChange={(e) => setEnteredCode(e.target.value.replace(/\D/g, ''))}
+                      placeholder="6-digit code"
+                      className="w-full px-3 py-2 text-center text-lg font-mono tracking-[0.35em] bg-white border border-stone-300 rounded-lg focus:outline-none focus:border-stone-900"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-sm"
+                  >
+                    Confirm & Sign In
+                  </button>
+                </form>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setVerificationStep(false); setError(''); }}
+                    className="text-[10px] text-stone-400 hover:text-stone-700 font-semibold transition-colors cursor-pointer"
+                  >
+                    ← Back to registration
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResendCode}
+                    className="flex items-center gap-1 text-[10px] text-stone-400 hover:text-stone-700 font-semibold transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Resend code
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
           {/* Icon Brand Header */}
           <div className="p-6 bg-white border-b border-stone-150 flex flex-col items-center text-center">
             <div className="w-10 h-10 rounded-full bg-stone-900 text-[#fbfbf9] flex items-center justify-center mb-2.5">
@@ -320,6 +436,8 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
               </div>
             </div>
           </div>
+            </>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>
