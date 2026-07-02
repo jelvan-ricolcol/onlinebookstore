@@ -4,9 +4,10 @@ import { CATEGORIES } from '../data/books';
 import { 
   Plus, BookOpen, DollarSign, Archive, TrendingUp, Sparkles, Sliders, Trash2, Edit2, RotateCcw, HelpCircle, 
   Check, Briefcase, Search, Printer, ArrowUpDown, User, Mail, MapPin, SlidersHorizontal, Box, ShieldCheck, 
-  Truck, Map, CheckCircle2, ChevronDown, ChevronUp, FileText, X
+  Truck, Map, CheckCircle2, ChevronDown, ChevronUp, FileText, X, Kanban
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import KanbanBoard from './KanbanBoard';
 
 // Milestone definitions matching OrderTracking step schema
 const RELL_TRACKING_STEPS = [
@@ -36,7 +37,7 @@ export default function PublisherWorkstation({
   onUpdateOrder,
   merchantName,
 }: PublisherWorkstationProps) {
-  const [activeTab, setActiveTab] = useState<'inventory' | 'sales' | 'publish'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'sales' | 'publish' | 'kanban'>('inventory');
 
   // --- Add Book Form States ---
   const [newTitle, setNewTitle] = useState('');
@@ -302,6 +303,14 @@ export default function PublisherWorkstation({
             }`}
           >
             Store Sales ({orders.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('kanban')}
+            className={`px-3 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+              activeTab === 'kanban' ? 'bg-[#1c1917] text-white' : 'text-stone-600 hover:text-stone-900'
+            }`}
+          >
+            <Kanban className="w-3.5 h-3.5" /> Project Board
           </button>
         </div>
       </div>
@@ -1085,6 +1094,22 @@ export default function PublisherWorkstation({
               </div>
             )}
           </form>
+        )}
+
+        {activeTab === 'kanban' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-serif font-bold text-base text-stone-850">
+                  Project Kanban Board
+                </h4>
+                <p className="text-[10px] text-stone-400 mt-0.5 font-light">
+                  Organise tasks, notes, projects, photos, and files across workflow columns.
+                </p>
+              </div>
+            </div>
+            <KanbanBoard />
+          </div>
         )}
       </div>
     </div>
